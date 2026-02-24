@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>QSurtido - App</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#b71c1c">
+    <link rel="manifest" href="manifest.json">
+    <style>
+        /* --- INTERFAZ --- */
+        body { font-family: 'Segoe UI', sans-serif; background: #f0f2f5; margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center; }
+        .no-print { background: white; padding: 25px; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); width: 420px; margin-bottom: 20px; border-top: 10px solid #b71c1c; }
+        #btnInstalar { display: none; width: 100%; padding: 12px; background: #2e7d32; color: white; border: none; border-radius: 8px; font-weight: bold; margin-bottom: 15px; cursor: pointer; font-size: 14px; }
+        h2 { text-align: center; color: #b71c1c; margin: 0 0 20px 0; font-size: 24px; text-transform: uppercase; }
+        .field { margin-bottom: 15px; }
+        label { display: block; font-size: 11px; font-weight: bold; color: #666; margin-bottom: 5px; text-transform: uppercase; }
+        input { width: 100%; padding: 12px; border: 2px solid #eee; border-radius: 8px; box-sizing: border-box; font-size: 18px; outline: none; font-weight: bold; }
+        .font-controls { display: flex; gap: 15px; margin-bottom: 20px; }
+        .btn-size { flex: 1; padding: 12px; background: #ef5350; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 900; font-size: 18px; box-shadow: 0 4px 0 #c62828; }
+        .button-group { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .btn-print { padding: 16px; border: none; border-radius: 10px; font-weight: bold; cursor: pointer; font-size: 14px; color: white; text-transform: uppercase; }
+        .btn-gondola { background: #444; }
+        .btn-grande { background: #d32f2f; }
+
+        /* --- DISEÑO ETIQUETAS --- */
+        #print-area { width: 80mm; display: flex; flex-direction: column; align-items: center; }
+        .etiqueta-gondola { width: 70mm; height: 28mm; display: flex; border: 1.5mm solid black; box-sizing: border-box; background: white; margin: 2mm 0; overflow: hidden; }
+        .etiqueta-grande { width: 70mm; height: 70mm; border: 1.5mm solid black; box-sizing: border-box; display: flex; flex-direction: column; background: white; margin: 2mm 0; overflow: hidden; }
+        .header-oferta { background: black; color: white; text-align: center; height: 14mm; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+        .header-oferta h1 { margin: 0; font-size: 30pt; font-family: 'Arial Black', sans-serif; }
+        .nombre-area { height: 16mm; display: flex; align-items: center; justify-content: center; padding: 0 4mm; text-align: center; flex-shrink: 0; }
+        .nombre-grande { font-weight: 900; font-size: 14pt; text-transform: uppercase; line-height: 1.1; width: 100%; }
+        .precio-area { flex-grow: 1; display: flex; align-items: center; justify-content: center; overflow: hidden; padding: 2mm 4mm 4mm 4mm; }
+        .precio-container { display: inline-flex; align-items: center; justify-content: center; white-space: nowrap; }
+        .monto { font-family: 'Impact', sans-serif; line-height: 0.8; } 
+        .col-dec { display: flex; flex-direction: column; justify-content: center; margin-left: 3mm; text-align: left; }
+        .cents { font-weight: bold; text-decoration: underline; line-height: 0.8; }
+        .bs { font-weight: bold; line-height: 1; margin-top: 2mm; }
+
+        /* Góndola */
+        .g-info { width: 50%; padding: 1.5mm; display: flex; align-items: center; justify-content: center; border-right: 1.2mm solid black; text-align: center; }
+        .g-nombre { font-weight: 900; font-size: 10pt; line-height: 1.1; text-transform: uppercase; }
+        .g-precio-sec { width: 50%; background: black; color: white; display: flex; align-items: center; justify-content: center; }
+
+        @media print {
+            @page { size: 80mm auto; margin: 0; }
+            .no-print { display: none !important; }
+            body { background: white; padding: 0; margin: 0; }
+            #print-area { width: 80mm !important; }
+            body.hide-grande .grande-wrapper { display: none !important; }
+            body.hide-gondola .gondola-wrapper { display: none !important; }
+        }
+    </style>
+</head>
+<body id="mainBody">
+
+    <div class="no-print">
+        <button id="btnInstalar">⬇️ INSTALAR QSurtido EN PC</button>
+        <h2>Control de Etiquetas</h2>
+        <div class="field"><label>Producto</label><input type="text" id="inNombre" value="PRODUCTO DE EJEMPLO" oninput="actualizar()"></div>
+        <label>Fuente Nombre</label>
+        <div class="font-controls"><button class="btn-size" onclick="cambiarFuente(-1)">A-</button><button class="btn-size" onclick="cambiarFuente(1)">A+</button></div>
+        <div class="field"><label>Precio</label><input type="text" id="inPrecio" value="20.00" oninput="actualizar()"></div>
+        <div class="button-group">
+            <button class="btn-print btn-gondola" onclick="imprimir('gondola')">Góndola</button>
+            <button class="btn-print btn-grande" onclick="imprimir('grande')">Oferta</button>
+        </div>
+    </div>
+
+    <div id="print-area">
+        <div class="gondola-wrapper"><div class="etiqueta-gondola"><div class="g-info"><div id="outNombreG" class="g-nombre"></div></div><div class="g-precio-sec"><div class="precio-container"><div id="montoG" class="monto"></div><div class="col-dec"><div id="centsG" class="cents"></div><div class="bs" style="font-size:11pt;">Bs.</div></div></div></div></div></div>
+        <div class="grande-wrapper"><div class="etiqueta-grande"><div class="header-oferta"><h1>OFERTA</h1></div><div class="nombre-area"><div id="outNombreB" class="nombre-grande"></div></div><div class="precio-area"><div id="contB" class="precio-container"><div id="montoB" class="monto"></div><div class="col-dec"><div id="centsB" class="cents"></div><div id="bsB" class="bs" style="font-size:24pt;">Bs.</div></div></div></div></div></div>
+    </div>
+
+    <script>
+        // LÓGICA APP
+        let deferredPrompt;
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault(); deferredPrompt = e;
+            document.getElementById('btnInstalar').style.display = 'block';
+        });
+        document.getElementById('btnInstalar').addEventListener('click', async () => {
+            if (deferredPrompt) {
+                deferredPrompt.prompt();
+                const { outcome } = await deferredPrompt.userChoice;
+                if (outcome === 'accepted') document.getElementById('btnInstalar').style.display = 'none';
+                deferredPrompt = null;
+            }
+        });
+        if ('serviceWorker' in navigator) { navigator.serviceWorker.register('sw.js'); }
+
+        // LÓGICA ETIQUETAS
+        let sG = 10; let sB = 14;
+        function actualizar() {
+            const n = document.getElementById('inNombre').value.toUpperCase();
+            const p = document.getElementById('inPrecio').value.replace(',', '.').split('.');
+            const ent = p[0] || "0", cen = (p[1] || "00").padEnd(2, '0').substring(0, 2);
+            document.getElementById('outNombreG').innerText = n; document.getElementById('outNombreB').innerText = n;
+            const mG = document.getElementById('montoG'), cG = document.getElementById('centsG'), mB = document.getElementById('montoB'), cB = document.getElementById('centsB'), bB = document.getElementById('bsB');
+            mG.innerText = ent; cG.innerText = cen; mB.innerText = ent; cB.innerText = cen;
+            setTimeout(() => { ajustar(mG, cG, null, 32, 60, 24, 0); ajustar(mB, cB, bB, 62, 130, 48, 24); }, 10);
+        }
+        function ajustar(mEl, cEl, bEl, maxWmm, baseM, baseC, baseB) {
+            let limitPx = maxWmm * 3.77, curM = baseM, curC = baseC, curB = baseB;
+            mEl.style.fontSize = curM + "pt"; cEl.style.fontSize = curC + "pt"; if(bEl) bEl.style.fontSize = curB + "pt";
+            let i = 0; while (mEl.parentElement.offsetWidth > limitPx && i < 50) {
+                curM -= 2; curC -= 0.8; curB -= 0.4;
+                mEl.style.fontSize = curM + "pt"; cEl.style.fontSize = curC + "pt"; if(bEl) bEl.style.fontSize = curB + "pt"; i++;
+            }
+        }
+        function cambiarFuente(d) { sG += d; sB += d; document.getElementById('outNombreG').style.fontSize = sG + 'pt'; document.getElementById('outNombreB').style.fontSize = sB + 'pt'; }
+        function imprimir(t) { document.body.classList.remove('hide-grande', 'hide-gondola'); if (t === 'gondola') document.body.classList.add('hide-grande'); else document.body.classList.add('hide-gondola'); window.print(); }
+        actualizar();
+    </script>
+</body>
+</html>

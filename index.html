@@ -5,9 +5,13 @@
     <title>QSurtido - App</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="theme-color" content="#b71c1c">
+    
+    <link rel="icon" type="image/png" href="etiqueta.png">
+    <link rel="apple-touch-icon" href="etiqueta.png">
     <link rel="manifest" href="manifest.json">
+
     <style>
-        /* --- INTERFAZ --- */
+        /* --- INTERFAZ DE CONTROL --- */
         body { font-family: 'Segoe UI', sans-serif; background: #f0f2f5; margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center; }
         .no-print { background: white; padding: 25px; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); width: 420px; margin-bottom: 20px; border-top: 10px solid #b71c1c; }
         #btnInstalar { display: none; width: 100%; padding: 12px; background: #2e7d32; color: white; border: none; border-radius: 8px; font-weight: bold; margin-bottom: 15px; cursor: pointer; font-size: 14px; }
@@ -26,10 +30,25 @@
         #print-area { width: 80mm; display: flex; flex-direction: column; align-items: center; }
         .etiqueta-gondola { width: 70mm; height: 28mm; display: flex; border: 1.5mm solid black; box-sizing: border-box; background: white; margin: 2mm 0; overflow: hidden; }
         .etiqueta-grande { width: 70mm; height: 70mm; border: 1.5mm solid black; box-sizing: border-box; display: flex; flex-direction: column; background: white; margin: 2mm 0; overflow: hidden; }
-        .header-oferta { background: black; color: white; text-align: center; height: 14mm; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-        .header-oferta h1 { margin: 0; font-size: 30pt; font-family: 'Arial Black', sans-serif; }
+        
+        /* CORRECCIÓN DE COLOR PARA IMPRESIÓN */
+        .header-oferta { 
+            background-color: black !important; 
+            color: white !important; 
+            text-align: center; 
+            height: 14mm; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            flex-shrink: 0;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+        }
+        .header-oferta h1 { margin: 0; font-size: 30pt; font-family: 'Arial Black', sans-serif; color: white !important; }
+        
         .nombre-area { height: 16mm; display: flex; align-items: center; justify-content: center; padding: 0 4mm; text-align: center; flex-shrink: 0; }
         .nombre-grande { font-weight: 900; font-size: 14pt; text-transform: uppercase; line-height: 1.1; width: 100%; }
+        
         .precio-area { flex-grow: 1; display: flex; align-items: center; justify-content: center; overflow: hidden; padding: 2mm 4mm 4mm 4mm; }
         .precio-container { display: inline-flex; align-items: center; justify-content: center; white-space: nowrap; }
         .monto { font-family: 'Impact', sans-serif; line-height: 0.8; } 
@@ -37,16 +56,31 @@
         .cents { font-weight: bold; text-decoration: underline; line-height: 0.8; }
         .bs { font-weight: bold; line-height: 1; margin-top: 2mm; }
 
-        /* Góndola */
+        /* Estilos Góndola */
         .g-info { width: 50%; padding: 1.5mm; display: flex; align-items: center; justify-content: center; border-right: 1.2mm solid black; text-align: center; }
         .g-nombre { font-weight: 900; font-size: 10pt; line-height: 1.1; text-transform: uppercase; }
-        .g-precio-sec { width: 50%; background: black; color: white; display: flex; align-items: center; justify-content: center; }
+        .g-precio-sec { 
+            width: 50%; 
+            background-color: black !important; 
+            color: white !important; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+        }
 
         @media print {
             @page { size: 80mm auto; margin: 0; }
             .no-print { display: none !important; }
             body { background: white; padding: 0; margin: 0; }
             #print-area { width: 80mm !important; }
+            
+            /* Forzar fondos negros y textos blancos */
+            .header-oferta, .g-precio-sec { background-color: black !important; color: white !important; }
+            .header-oferta h1, .bs, .cents, .monto { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            .g-precio-sec * { color: white !important; }
+            
             body.hide-grande .grande-wrapper { display: none !important; }
             body.hide-gondola .gondola-wrapper { display: none !important; }
         }
@@ -68,12 +102,40 @@
     </div>
 
     <div id="print-area">
-        <div class="gondola-wrapper"><div class="etiqueta-gondola"><div class="g-info"><div id="outNombreG" class="g-nombre"></div></div><div class="g-precio-sec"><div class="precio-container"><div id="montoG" class="monto"></div><div class="col-dec"><div id="centsG" class="cents"></div><div class="bs" style="font-size:11pt;">Bs.</div></div></div></div></div></div>
-        <div class="grande-wrapper"><div class="etiqueta-grande"><div class="header-oferta"><h1>OFERTA</h1></div><div class="nombre-area"><div id="outNombreB" class="nombre-grande"></div></div><div class="precio-area"><div id="contB" class="precio-container"><div id="montoB" class="monto"></div><div class="col-dec"><div id="centsB" class="cents"></div><div id="bsB" class="bs" style="font-size:24pt;">Bs.</div></div></div></div></div></div>
+        <div class="gondola-wrapper">
+            <div class="etiqueta-gondola">
+                <div class="g-info"><div id="outNombreG" class="g-nombre"></div></div>
+                <div class="g-precio-sec">
+                    <div class="precio-container">
+                        <div id="montoG" class="monto"></div>
+                        <div class="col-dec">
+                            <div id="centsG" class="cents"></div>
+                            <div class="bs" style="font-size:11pt;">Bs.</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="grande-wrapper">
+            <div class="etiqueta-grande">
+                <div class="header-oferta"><h1>OFERTA</h1></div>
+                <div class="nombre-area"><div id="outNombreB" class="nombre-grande"></div></div>
+                <div class="precio-area">
+                    <div id="contB" class="precio-container">
+                        <div id="montoB" class="monto"></div>
+                        <div class="col-dec">
+                            <div id="centsB" class="cents"></div>
+                            <div id="bsB" class="bs" style="font-size:24pt;">Bs.</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 
     <script>
-        // LÓGICA APP
+        // LÓGICA APP INSTALABLE
         let deferredPrompt;
         window.addEventListener('beforeinstallprompt', (e) => {
             e.preventDefault(); deferredPrompt = e;
@@ -95,10 +157,14 @@
             const n = document.getElementById('inNombre').value.toUpperCase();
             const p = document.getElementById('inPrecio').value.replace(',', '.').split('.');
             const ent = p[0] || "0", cen = (p[1] || "00").padEnd(2, '0').substring(0, 2);
-            document.getElementById('outNombreG').innerText = n; document.getElementById('outNombreB').innerText = n;
+            document.getElementById('outNombreG').innerText = n; 
+            document.getElementById('outNombreB').innerText = n;
             const mG = document.getElementById('montoG'), cG = document.getElementById('centsG'), mB = document.getElementById('montoB'), cB = document.getElementById('centsB'), bB = document.getElementById('bsB');
             mG.innerText = ent; cG.innerText = cen; mB.innerText = ent; cB.innerText = cen;
-            setTimeout(() => { ajustar(mG, cG, null, 32, 60, 24, 0); ajustar(mB, cB, bB, 62, 130, 48, 24); }, 10);
+            setTimeout(() => { 
+                ajustar(mG, cG, null, 32, 60, 24, 0); 
+                ajustar(mB, cB, bB, 62, 130, 48, 24); 
+            }, 10);
         }
         function ajustar(mEl, cEl, bEl, maxWmm, baseM, baseC, baseB) {
             let limitPx = maxWmm * 3.77, curM = baseM, curC = baseC, curB = baseB;
@@ -109,7 +175,12 @@
             }
         }
         function cambiarFuente(d) { sG += d; sB += d; document.getElementById('outNombreG').style.fontSize = sG + 'pt'; document.getElementById('outNombreB').style.fontSize = sB + 'pt'; }
-        function imprimir(t) { document.body.classList.remove('hide-grande', 'hide-gondola'); if (t === 'gondola') document.body.classList.add('hide-grande'); else document.body.classList.add('hide-gondola'); window.print(); }
+        function imprimir(t) { 
+            document.body.classList.remove('hide-grande', 'hide-gondola'); 
+            if (t === 'gondola') document.body.classList.add('hide-grande'); 
+            else document.body.classList.add('hide-gondola'); 
+            window.print(); 
+        }
         actualizar();
     </script>
 </body>
